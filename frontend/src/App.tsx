@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { CampusMap } from "./components/Map";
+import { SearchBar } from "./components/SearchBar";
+import { useState } from "react";
+import { Box } from "@mui/material";
+
+// Example coordinates for testing
+const EXAMPLE_LOCATIONS = {
+  library: [-33.917, 151.231],
+  cafeteria: [-33.918, 151.232],
+  gym: [-33.916, 151.23],
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [destination, setDestination] = useState<
+    [number, number] | undefined
+  >();
+
+  const handleSearch = (query: string) => {
+    // Simple example of location search
+    const locationKey = query.toLowerCase();
+    if (locationKey in EXAMPLE_LOCATIONS) {
+      setDestination(
+        EXAMPLE_LOCATIONS[locationKey as keyof typeof EXAMPLE_LOCATIONS]
+      );
+    } else {
+      // Try to parse coordinates if provided in format "lat,lng"
+      const coords = query.split(",").map(Number);
+      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+        setDestination([coords[0], coords[1]]);
+      }
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Box position="relative">
+      <SearchBar onSearch={handleSearch} />
+      <CampusMap destination={destination} />
+    </Box>
+  );
 }
 
-export default App
+export default App;
