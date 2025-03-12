@@ -1,177 +1,242 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { useEffect, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
+import { useState, useEffect } from "react";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import { Navigation, Crosshair } from "lucide-react";
-import { Alert, Box, IconButton, Snackbar } from "@mui/material";
-import L from "leaflet";
-import "leaflet-routing-machine";
+import RoutingControl from "./RoutingControl";
+import {
+  Box,
+  IconButton,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+
+// Fix icon paths to use default Leaflet icons
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
+// Create default blue icon
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
 });
 
+// Create red icon for clicked location
+const RedIcon = L.icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+// Set default icon for all markers
 L.Marker.prototype.options.icon = DefaultIcon;
 
-interface LocationUpdaterProps {
-  onLocationFound: (coords: [number, number]) => void;
-}
+// Component to handle map clicks
+const MapEvents = ({
+  setClickedLocation,
+}: {
+  setClickedLocation: (position: [number, number]) => void;
+}) => {
+  useMapEvents({
+    click: (e) => {
+      setClickedLocation([e.latlng.lat, e.latlng.lng]);
+    },
+  });
+  return null;
+};
 
-// Component to handle location updates
-const LocationUpdater = ({ onLocationFound }: LocationUpdaterProps) => {
+// Component to center map on user location
+const LocationMarker = ({
+  position,
+}: {
+  position: [number, number] | null;
+}) => {
   const map = useMap();
 
   useEffect(() => {
-    map.locate({ watch: true, enableHighAccuracy: true });
-
-    const handleLocationFound = (e: L.LocationEvent) => {
-      if (e.latlng) {
-        const { lat, lng } = e.latlng;
-        onLocationFound([lat, lng]);
-      } else {
-        console.error("Location data is undefined");
-      }
-    };
-
-    map.on("locationfound", handleLocationFound);
-
-    return () => {
-      map.stopLocate();
-      map.off("locationfound", handleLocationFound);
-    };
-  }, [map, onLocationFound]);
+    if (position) {
+      // Use flyTo for smooth animation when changing position
+      map.flyTo(position, 15);
+    }
+  }, [position, map]);
 
   return null;
 };
 
-interface RoutingControlProps {
-  start: [number, number];
-  end: [number, number];
-}
-
-// Component to handle routing
-const RoutingControl = ({ start, end }: RoutingControlProps) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!start || !end) return;
-
-    const routingControl = L.Routing.control({
-      waypoints: [L.latLng(start), L.latLng(end)],
-      routeWhileDragging: true,
-      showAlternatives: true,
-      fitSelectedRoutes: true,
-      lineOptions: {
-        styles: [{ color: "#1976d2", weight: 6 }],
-      },
-    }).addTo(map);
-
-    return () => {
-      map.removeControl(routingControl);
-    };
-  }, [map, start, end]);
-
-  return null;
-};
-
-interface CampusMapProps {
+interface MapComponentProps {
   destination?: [number, number];
 }
 
-export const CampusMap = ({ destination }: CampusMapProps) => {
+const MapComponent = ({ destination }: MapComponentProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
-  const [center] = useState<[number, number]>([-33.917, 151.231]); // Default center
+  const [clickedLocation, setClickedLocation] = useState<
+    [number, number] | null
+  >(null);
+  const [initialLocation, setInitialLocation] = useState<[number, number]>([
+    51.505, -0.09,
+  ]);
   const [error, setError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(true);
+  const theme = useTheme();
 
-  const handleGetCurrentLocation = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newLocation: [number, number] = [
-            position.coords.latitude,
-            position.coords.longitude,
-          ];
-          setUserLocation(newLocation);
-          setError(null);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setError(
-            "Couldn't access your location. Please check your browser permissions."
-          );
-        }
-      );
-    } else {
-      setError("Geolocation is not supported by your browser.");
+  // Function to get current location
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      setIsLocating(false);
+      return;
     }
-  };
 
-  const MapView = ({ center }: { center: [number, number] | null }) => {
-    const map = useMap();
+    setIsLocating(true);
 
-    useEffect(() => {
-      if (center) {
-        map.flyTo(center, 16);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const currentLocation: [number, number] = [latitude, longitude];
+        setUserLocation(currentLocation);
+        setInitialLocation(currentLocation);
+        setError(null);
+        setIsLocating(false);
+      },
+      (err) => {
+        setError(`Error getting location: ${err.message}`);
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
-    }, [center, map]);
-
-    return null;
+    );
   };
+
+  // Attempt to get location on component mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
 
   return (
-    <Box sx={{ height: "100vh", width: "100%", position: "relative" }}>
-      <IconButton
-        onClick={handleGetCurrentLocation}
+    <Box sx={{ position: "relative", height: "100vh", width: "100%" }}>
+      {isLocating && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.7)",
+            padding: 2,
+            borderRadius: 1,
+          }}
+        >
+          <CircularProgress size={40} />
+          <Typography sx={{ mt: 2, color: "white" }}>
+            Finding your location...
+          </Typography>
+        </Box>
+      )}
+
+      <Box
         sx={{
           position: "absolute",
-          top: "80px",
-          right: "16px",
+          bottom: "70px",
+          left: "10px",
           zIndex: 1000,
-          backgroundColor: "background.paper",
-          boxShadow: 2,
-          "&:hover": {
-            backgroundColor: "action.hover",
-          },
+          backgroundColor: "rgba(0,0,0,0.7)",
+          padding: 1,
+          borderRadius: 1,
+          color: "white",
+          maxWidth: "70%",
         }}
-        title="Get current location"
       >
-        <Crosshair />
+        <Typography variant="body2">
+          Click anywhere on the map to place a red marker and find a route
+        </Typography>
+      </Box>
+
+      <IconButton
+        onClick={getCurrentLocation}
+        sx={{
+          position: "absolute",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 1000,
+          backgroundColor: theme.palette.background.paper,
+          "&:hover": {
+            backgroundColor: theme.palette.action.hover,
+          },
+          boxShadow: 2,
+        }}
+        title="Get my location"
+      >
+        <MyLocationIcon />
       </IconButton>
 
       <MapContainer
-        center={center}
-        zoom={16}
+        center={initialLocation}
+        zoom={15}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        <LocationUpdater onLocationFound={setUserLocation} />
+        {/* Add map events handler */}
+        <MapEvents setClickedLocation={setClickedLocation} />
 
-        {/* Add the MapView component to navigate to user location */}
-        {userLocation && <MapView center={userLocation} />}
+        {/* Add location marker to center map */}
+        {userLocation && <LocationMarker position={userLocation} />}
 
         {userLocation && (
           <Marker position={userLocation}>
-            <Popup>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Navigation style={{ width: 16, height: 16 }} />
-                <span>Your Location</span>
-              </Box>
-            </Popup>
+            <Popup>Your Current Location</Popup>
           </Marker>
         )}
 
-        {userLocation && destination && (
+        {destination && (
+          <Marker position={destination} icon={RedIcon}>
+            <Popup>Destination</Popup>
+          </Marker>
+        )}
+
+        {/* Show red marker at clicked location */}
+        {clickedLocation && (
+          <Marker position={clickedLocation} icon={RedIcon}>
+            <Popup>Selected Location</Popup>
+          </Marker>
+        )}
+
+        {/* Show routing between current location and clicked location */}
+        {userLocation && clickedLocation && (
+          <RoutingControl start={userLocation} end={clickedLocation} />
+        )}
+
+        {/* Show routing to destination if provided */}
+        {userLocation && destination && !clickedLocation && (
           <RoutingControl start={userLocation} end={destination} />
         )}
       </MapContainer>
@@ -180,6 +245,7 @@ export const CampusMap = ({ destination }: CampusMapProps) => {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="error" sx={{ width: "100%" }}>
           {error}
@@ -188,3 +254,5 @@ export const CampusMap = ({ destination }: CampusMapProps) => {
     </Box>
   );
 };
+
+export default MapComponent;
