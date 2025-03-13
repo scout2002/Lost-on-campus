@@ -138,7 +138,14 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
   }, []);
 
   return (
-    <Box sx={{ position: "relative", height: "100vh", width: "100%" }}>
+    <Box
+      sx={{
+        position: "relative",
+        height: "100vh",
+        width: "100%",
+        pt: isMobile ? 6 : 8,
+      }}
+    >
       {isLocating && (
         <Box
           sx={{
