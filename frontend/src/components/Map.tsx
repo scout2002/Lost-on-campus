@@ -25,6 +25,7 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 // Fix icon paths to use default Leaflet icons
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import { Navigation2OffIcon } from "lucide-react";
 
 // Create default blue icon
 const DefaultIcon = L.icon({
@@ -36,6 +37,7 @@ const DefaultIcon = L.icon({
 });
 
 // Create red icon for clicked location
+// Create red icon for clicked location
 const RedIcon = L.icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
@@ -46,17 +48,17 @@ const RedIcon = L.icon({
 });
 
 // Set default icon for all markers
-L.Marker.prototype.options.icon = DefaultIcon;
+// L.Marker.prototype.options.icon = DefaultIcon;
 
 // Component to handle map clicks
 const MapEvents = ({
-  setClickedLocation,
+  setDestination,
 }: {
-  setClickedLocation: (position: [number, number]) => void;
+  setDestination: (position: [number, number]) => void;
 }) => {
   useMapEvents({
     click: (e) => {
-      setClickedLocation([e.latlng.lat, e.latlng.lng]);
+      setDestination([e.latlng.lat, e.latlng.lng]);
     },
   });
   return null;
@@ -82,15 +84,14 @@ const LocationMarker = ({
 
 interface MapComponentProps {
   destination?: [number, number];
+  setDestination: (position: [number, number]) => void;
 }
 
-const MapComponent = ({ destination }: MapComponentProps) => {
+const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
-  const [clickedLocation, setClickedLocation] = useState<
-    [number, number] | null
-  >(null);
+
   const [initialLocation, setInitialLocation] = useState<[number, number]>([
     51.505, -0.09,
   ]);
@@ -105,7 +106,7 @@ const MapComponent = ({ destination }: MapComponentProps) => {
       setIsLocating(false);
       return;
     }
-
+    setDestination(undefined);
     setIsLocating(true);
 
     navigator.geolocation.getCurrentPosition(
@@ -177,6 +178,28 @@ const MapComponent = ({ destination }: MapComponentProps) => {
         </Typography>
       </Box>
 
+      {destination !== undefined && (
+        <IconButton
+          onClick={() => {
+            setDestination(undefined);
+            getCurrentLocation();
+          }}
+          sx={{
+            position: "absolute",
+            bottom: "70px",
+            right: "24px",
+            zIndex: 1000,
+            backgroundColor: theme.palette.background.paper,
+            "&:hover": {
+              backgroundColor: theme.palette.action.hover,
+            },
+            boxShadow: 2,
+          }}
+          title="Get my location"
+        >
+          <Navigation2OffIcon />
+        </IconButton>
+      )}
       <IconButton
         onClick={getCurrentLocation}
         sx={{
@@ -206,13 +229,13 @@ const MapComponent = ({ destination }: MapComponentProps) => {
         />
 
         {/* Add map events handler */}
-        <MapEvents setClickedLocation={setClickedLocation} />
+        <MapEvents setDestination={setDestination} />
 
         {/* Add location marker to center map */}
         {userLocation && <LocationMarker position={userLocation} />}
 
         {userLocation && (
-          <Marker position={userLocation}>
+          <Marker position={userLocation} icon={DefaultIcon}>
             <Popup>Your Current Location</Popup>
           </Marker>
         )}
@@ -223,20 +246,8 @@ const MapComponent = ({ destination }: MapComponentProps) => {
           </Marker>
         )}
 
-        {/* Show red marker at clicked location */}
-        {clickedLocation && (
-          <Marker position={clickedLocation} icon={RedIcon}>
-            <Popup>Selected Location</Popup>
-          </Marker>
-        )}
-
-        {/* Show routing between current location and clicked location */}
-        {userLocation && clickedLocation && (
-          <RoutingControl start={userLocation} end={clickedLocation} />
-        )}
-
         {/* Show routing to destination if provided */}
-        {userLocation && destination && !clickedLocation && (
+        {userLocation && destination && (
           <RoutingControl start={userLocation} end={destination} />
         )}
       </MapContainer>
