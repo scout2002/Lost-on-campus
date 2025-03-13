@@ -15,7 +15,7 @@ const RoutingControl = ({ start, end }: RoutingControlProps) => {
     if (!map) return;
 
     const routingControl = L.Routing.control({
-      waypoints: [L.latLng(start[0], start[1]), L.latLng(end[0], end[1])],
+      waypoints: [L.latLng(start[0], start[1]), L.latLng(end[1], end[0])],
       lineOptions: {
         styles: [{ color: "#6FA1EC", weight: 4 }],
         extendToWaypoints: false,

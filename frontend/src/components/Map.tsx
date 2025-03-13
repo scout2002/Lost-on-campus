@@ -37,33 +37,14 @@ const DefaultIcon = L.icon({
   popupAnchor: [1, -34],
 });
 
-// Create red icon for clicked location
-// Create red icon for clicked location
-// const RedIcon = L.icon({
-//   iconUrl:
-//     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-//   shadowUrl: iconShadow,
-//   iconSize: [25, 41],
-//   iconAnchor: [12, 41],
-//   popupAnchor: [1, -34],
-// });
-
-// Set default icon for all markers
-// L.Marker.prototype.options.icon = DefaultIcon;
-
-// Component to handle map clicks
-// const MapEvents = ({
-//   setDestination,
-// }: {
-//   setDestination: (position: [number, number]) => void;
-// }) => {
-//   useMapEvents({
-//     click: (e) => {
-//       setDestination([e.latlng.lat, e.latlng.lng]);
-//     },
-//   });
-//   return null;
-// };
+const RedIcon = L.icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
 
 // Component to center map on user location
 const LocationMarker = ({
@@ -85,10 +66,15 @@ const LocationMarker = ({
 
 interface MapComponentProps {
   destination?: [number, number];
-  setDestination: (position: [number, number] | undefined) => void;
+  setCurrentLocation: (position: [number, number]) => void;
+  setDestination: (position: [number, number]) => void;
 }
 
-const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
+const MapComponent = ({
+  destination,
+  setCurrentLocation,
+  setDestination,
+}: MapComponentProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
@@ -116,6 +102,7 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
         const { latitude, longitude } = position.coords;
         const currentLocation: [number, number] = [latitude, longitude];
         setUserLocation(currentLocation);
+        setCurrentLocation(currentLocation);
         setInitialLocation(currentLocation);
         setError(null);
         setIsLocating(false);
@@ -249,11 +236,11 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
           </Marker>
         )}
 
-        {/* {destination && (
+        {destination && (
           <Marker position={destination} icon={RedIcon}>
             <Popup>Destination</Popup>
           </Marker>
-        )} */}
+        )}
 
         {/* Show routing to destination if provided */}
         {userLocation && destination && (

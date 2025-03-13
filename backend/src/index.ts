@@ -4,6 +4,7 @@ import "dotenv/config";
 import errorHandler from "./middleware/errorhandler";
 import { seedDatabase } from "./database/seed-database";
 import lostOnCampusRoutes from "./routers/college.route";
+import cors from "cors";
 
 export const client = new MongoClient(
   process.env.MONGO_URI || "mongodb://localhost:27017"
@@ -26,6 +27,7 @@ async function startServer() {
 startServer();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.listen(8000, () => {
