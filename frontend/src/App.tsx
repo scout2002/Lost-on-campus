@@ -1,7 +1,8 @@
-import { SearchBar } from "./components/SearchBar";
+import { ChatBox } from "./components/ChatBox";
 import { useState } from "react";
 import { Box } from "@mui/material";
 import MapComponent from "./components/Map";
+import Header from "./components/Header";
 
 // Example coordinates for testing with proper tuple typing
 const PINNED_LOCATIONS: Record<string, [number, number]> = {
@@ -62,13 +63,22 @@ function App() {
   };
 
   return (
-    <Box sx={{ position: "relative", height: "100vh", width: "100%" }}>
-      <SearchBar onSearch={handleSearch} />
-      <MapComponent
-        destination={destination}
-        setDestination={handleSetDestination}
-      />
-    </Box>
+    <>
+      <Header />
+      <Box
+        sx={{
+          position: "relative",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        <ChatBox onSearch={handleSearch} />
+        <MapComponent
+          destination={destination}
+          setDestination={handleSetDestination}
+        />
+      </Box>
+    </>
   );
 }
 

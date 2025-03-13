@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Typography,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 
@@ -88,6 +89,8 @@ interface MapComponentProps {
 }
 
 const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
@@ -97,7 +100,6 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
   ]);
   const [error, setError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(true);
-  const theme = useTheme();
 
   // Function to get current location
   const getCurrentLocation = () => {
@@ -160,7 +162,7 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
         </Box>
       )}
 
-      <Box
+      {/* <Box
         sx={{
           position: "absolute",
           bottom: "70px",
@@ -176,7 +178,7 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
         <Typography variant="body2">
           Click anywhere on the map to place a red marker and find a route
         </Typography>
-      </Box>
+      </Box> */}
 
       {destination !== undefined && (
         <IconButton
@@ -186,8 +188,8 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
           }}
           sx={{
             position: "absolute",
-            bottom: "70px",
-            right: "24px",
+            bottom: isMobile ? "90px" : "24px",
+            right: "75px",
             zIndex: 1000,
             backgroundColor: theme.palette.background.paper,
             "&:hover": {
@@ -204,7 +206,7 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
         onClick={getCurrentLocation}
         sx={{
           position: "absolute",
-          bottom: "24px",
+          bottom: isMobile ? "90px" : "24px",
           right: "24px",
           zIndex: 1000,
           backgroundColor: theme.palette.background.paper,
