@@ -3,7 +3,7 @@ import {
   TileLayer,
   Marker,
   Popup,
-  useMapEvents,
+  // useMapEvents,
   useMap,
 } from "react-leaflet";
 import { useState, useEffect } from "react";
@@ -38,31 +38,31 @@ const DefaultIcon = L.icon({
 
 // Create red icon for clicked location
 // Create red icon for clicked location
-const RedIcon = L.icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-});
+// const RedIcon = L.icon({
+//   iconUrl:
+//     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+//   shadowUrl: iconShadow,
+//   iconSize: [25, 41],
+//   iconAnchor: [12, 41],
+//   popupAnchor: [1, -34],
+// });
 
 // Set default icon for all markers
 // L.Marker.prototype.options.icon = DefaultIcon;
 
 // Component to handle map clicks
-const MapEvents = ({
-  setDestination,
-}: {
-  setDestination: (position: [number, number]) => void;
-}) => {
-  useMapEvents({
-    click: (e) => {
-      setDestination([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  return null;
-};
+// const MapEvents = ({
+//   setDestination,
+// }: {
+//   setDestination: (position: [number, number]) => void;
+// }) => {
+//   useMapEvents({
+//     click: (e) => {
+//       setDestination([e.latlng.lat, e.latlng.lng]);
+//     },
+//   });
+//   return null;
+// };
 
 // Component to center map on user location
 const LocationMarker = ({
@@ -84,7 +84,7 @@ const LocationMarker = ({
 
 interface MapComponentProps {
   destination?: [number, number];
-  setDestination: (position: [number, number]) => void;
+  setDestination: (position: [number, number] | undefined) => void;
 }
 
 const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
@@ -229,7 +229,7 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
         />
 
         {/* Add map events handler */}
-        <MapEvents setDestination={setDestination} />
+        {/* <MapEvents setDestination={setDestination} /> */}
 
         {/* Add location marker to center map */}
         {userLocation && <LocationMarker position={userLocation} />}
@@ -240,11 +240,11 @@ const MapComponent = ({ destination, setDestination }: MapComponentProps) => {
           </Marker>
         )}
 
-        {destination && (
+        {/* {destination && (
           <Marker position={destination} icon={RedIcon}>
             <Popup>Destination</Popup>
           </Marker>
-        )}
+        )} */}
 
         {/* Show routing to destination if provided */}
         {userLocation && destination && (

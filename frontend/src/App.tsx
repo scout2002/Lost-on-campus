@@ -12,9 +12,15 @@ const PINNED_LOCATIONS: Record<string, [number, number]> = {
 };
 
 function App() {
-  const [destination, setDestination] = useState<
-    [number, number] | undefined
-  >();
+  // Explicitly define the type for setDestination to accept undefined
+  const [destination, setDestination] = useState<[number, number] | undefined>(
+    undefined
+  );
+
+  // Define the type for the component's setDestination prop
+  type SetDestinationType = React.Dispatch<
+    React.SetStateAction<[number, number] | undefined>
+  >;
 
   const handleSearch = (query: string) => {
     // Simple example of location search
@@ -42,15 +48,26 @@ function App() {
         if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
           // Explicitly type as tuple to ensure type safety
           setDestination([coords[0], coords[1]] as [number, number]);
+        } else {
+          // If no match found, explicitly set to undefined
+          setDestination(undefined);
         }
       }
     }
   };
 
+  // Create a wrapper function if needed to explicitly handle undefined
+  const handleSetDestination: SetDestinationType = (value) => {
+    setDestination(value);
+  };
+
   return (
     <Box sx={{ position: "relative", height: "100vh", width: "100%" }}>
       <SearchBar onSearch={handleSearch} />
-      <MapComponent destination={destination} setDestination={setDestination} />
+      <MapComponent
+        destination={destination}
+        setDestination={handleSetDestination}
+      />
     </Box>
   );
 }

@@ -14,16 +14,17 @@ const RoutingControl = ({ start, end }: RoutingControlProps) => {
   useEffect(() => {
     if (!map) return;
 
-    // Use type assertion to resolve TypeScript error
-    const routingControl = (L as any).Routing.control({
+    const routingControl = L.Routing.control({
       waypoints: [L.latLng(start[0], start[1]), L.latLng(end[0], end[1])],
       lineOptions: {
         styles: [{ color: "#6FA1EC", weight: 4 }],
+        extendToWaypoints: false,
+        missingRouteTolerance: 0,
       },
       show: false,
       addWaypoints: false,
-      routeWhileDragging: true,
       draggableWaypoints: false,
+      routeWhileDragging: false,
       fitSelectedRoutes: true,
     }).addTo(map);
 
